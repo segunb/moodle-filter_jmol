@@ -333,8 +333,6 @@ if ($controls !== '0') {
     echo get_string('spin', 'filter_jmol', true);
     echo '<img class = "jmolPanelImg" title = "'.get_string('downloadpngj', 'filter_jmol', true).'" id = "pngj" ';
     echo 'src = "'.$wwwroot.'/filter/jmol/pix/download.png">';
-    echo '<img class = "jmolPanelImg" title = "'.get_string('togglefullscreen', 'filter_jmol', true).'" id = "fullscreen" ';
-    echo 'src = "'.$wwwroot.'/filter/jmol/pix/fullscreen.png">';
     echo '<a href="'.$wwwroot.'/filter/jmol/help.php" target = "_blank">';
     echo '<img title = "'.get_string('help', 'filter_jmol', true).'" ';
     echo 'class = "jmolPanelImg" id = "help" src = "'.$wwwroot.'/filter/jmol/pix/help.png"></a>';
