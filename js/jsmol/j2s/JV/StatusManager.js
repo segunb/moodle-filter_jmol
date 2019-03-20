@@ -20,6 +20,7 @@ this.stereoSync = false;
 this.qualityJPG = -1;
 this.qualityPNG = -1;
 this.imageType = null;
+this.audios = null;
 Clazz.instantialize (this, arguments);
 }, JV, "StatusManager");
 Clazz.prepareFields (c$, function () {
@@ -44,7 +45,7 @@ msgRecord.addLast (Integer.$valueOf (intInfo));
 msgRecord.addLast (statusInfo);
 var statusRecordSet = (isReplace ? null : this.messageQueue.get (statusName));
 if (statusRecordSet == null) this.messageQueue.put (statusName, statusRecordSet =  new JU.Lst ());
- else if (statusRecordSet.size () == JV.StatusManager.MAXIMUM_QUEUE_LENGTH) statusRecordSet.remove (0);
+ else if (statusRecordSet.size () == JV.StatusManager.MAXIMUM_QUEUE_LENGTH) statusRecordSet.removeItemAt (0);
 statusRecordSet.addLast (msgRecord);
 }, "~S,~N,~O,~B");
 Clazz.defineMethod (c$, "getStatusChanged", 
@@ -300,7 +301,7 @@ Clazz.defineMethod (c$, "syncSend",
 function (script, appletNameOrProp, port) {
 if (port != 0 || this.notifyEnabled (J.c.CBK.SYNC)) {
 var o =  Clazz.newArray (-1, [null, script, appletNameOrProp, Integer.$valueOf (port)]);
-this.cbl.notifyCallback (J.c.CBK.SYNC, o);
+if (this.cbl != null) this.cbl.notifyCallback (J.c.CBK.SYNC, o);
 return o[0];
 }return null;
 }, "~S,~O,~N");
@@ -382,6 +383,69 @@ Clazz.defineMethod (c$, "resizeInnerPanel",
 function (width, height) {
 return (this.jsl == null || width == this.vwr.getScreenWidth () && height == this.vwr.getScreenHeight () ?  Clazz.newIntArray (-1, [width, height]) : this.jsl.resizeInnerPanel ("preferredWidthHeight " + width + " " + height + ";"));
 }, "~N,~N");
+Clazz.defineMethod (c$, "resizeInnerPanelString", 
+function (data) {
+if (this.jsl != null) this.jsl.resizeInnerPanel (data);
+}, "~S");
+Clazz.defineMethod (c$, "registerAudio", 
+function (id, htParams) {
+this.stopAudio (id);
+if (this.audios == null) this.audios =  new java.util.Hashtable ();
+if (htParams == null) this.audios.remove (id);
+ else this.audios.put (id, htParams.get ("audioPlayer"));
+}, "~S,java.util.Map");
+Clazz.defineMethod (c$, "stopAudio", 
+ function (id) {
+if (this.audios == null) return;
+var player = this.audios.get (id);
+if (player != null) player.action ("kill");
+}, "~S");
+Clazz.defineMethod (c$, "playAudio", 
+function (htParams) {
+if (!this.vwr.getBoolean (603979797)) {
+if (htParams == null) return;
+htParams.put ("status", "close");
+JU.Logger.info ("allowAudio is set false");
+this.notifyAudioStatus (htParams);
+return;
+}try {
+var action = (htParams == null ? "close" : htParams.get ("action"));
+var id = (htParams == null ? null : htParams.get ("id"));
+if (action != null && action.length > 0) {
+if (id == null || id.length == 0) {
+if (this.audios == null || this.audios.isEmpty ()) return;
+if (action.equals ("close")) {
+for (var key, $key = this.audios.keySet ().iterator (); $key.hasNext () && ((key = $key.next ()) || true);) {
+var player = this.audios.remove (key);
+player.action ("close");
+}
+}return;
+}var player = this.audios.get (id);
+if (player != null) {
+player.action (action);
+return;
+}}try {
+(J.api.Interface.getInterface ("JU.JmolAudio", this.vwr, "script")).playAudio (this.vwr, htParams);
+} catch (e) {
+if (Clazz.exceptionOf (e, Exception)) {
+JU.Logger.info (e.getMessage ());
+} else {
+throw e;
+}
+}
+} catch (t) {
+}
+}, "java.util.Map");
+Clazz.defineMethod (c$, "notifyAudioStatus", 
+function (htParams) {
+var status = htParams.get ("status");
+System.out.println (status);
+var script = htParams.get (status);
+if (script != null) this.vwr.script (script);
+if (status === "ended") this.registerAudio (htParams.get ("id"), null);
+var sJmol = this.jmolScriptCallback (J.c.CBK.AUDIO);
+if (this.notifyEnabled (J.c.CBK.AUDIO)) this.cbl.notifyCallback (J.c.CBK.AUDIO,  Clazz.newArray (-1, [sJmol, htParams]));
+}, "java.util.Map");
 Clazz.defineStatics (c$,
 "MAXIMUM_QUEUE_LENGTH", 16,
 "SYNC_OFF", 0,

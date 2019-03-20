@@ -70,7 +70,7 @@ var result =  new JU.Lst ();
 for (var i = 0; i <= this.xPt; i++) result.addLast (this.isSpecialAssignment ? this.xStack[i] : JS.SV.selectItemVar (this.xStack[i]));
 
 if (this.lastAssignedString != null) {
-result.remove (0);
+result.removeItemAt (0);
 result.add (0, this.lastAssignedString);
 this.lastAssignedString.intValue = this.xStack[0].intValue;
 }return JS.SV.newV (135198, result);
@@ -642,7 +642,7 @@ default:
 return this.addXBool (!x2.asBoolean ());
 }
 case 268435665:
-var iv = op.intValue & -481;
+var iv = (op.intValue == 805306401 ? 805306401 : op.intValue & -481);
 if (this.chk) return this.addXObj (JS.SV.newS (""));
 if (this.vwr.allowArrayDotNotation) switch (x2.tok) {
 case 6:
@@ -662,6 +662,7 @@ break;
 switch (iv) {
 case 1275068418:
 return this.addX (x2.toArray ());
+case 805306401:
 case 1073741824:
 return (x2.tok == 10 && (this.chk ? this.addXStr ("") : this.getAllProperties (x2, op.value)));
 case 1140850696:
@@ -797,6 +798,11 @@ case 268435862:
 return this.addXBool (JS.SV.isLike (x1, x2));
 case 268435617:
 switch (x1.tok) {
+case 6:
+var ht =  new java.util.Hashtable (x1.value);
+var map = x2.getMap ();
+if (map != null) ht.putAll (map);
+return this.addX (JS.SV.getVariableMap (ht));
 case 2:
 if (!this.isDecimal (x2)) return this.addXInt (x1.intValue + x2.asInt ());
 break;
@@ -1104,7 +1110,7 @@ if (bs.isEmpty ()) break;
 if (bsRestrict != null) {
 bs = JU.BSUtil.copy (bs);
 bs.and (bsRestrict);
-}return this.eval.getBitsetProperty (bs, 1145047050, null, null, x.value, null, false, 2147483647, false);
+}return this.eval.getBitsetProperty (bs, null, 1145047050, null, null, x.value, null, false, 2147483647, false);
 case 4:
 pt = JU.Escape.uP (JS.SV.sValue (x));
 if (Clazz.instanceOf (pt, JU.P3)) return pt;
@@ -1171,7 +1177,7 @@ case 1094713349:
 continue;
 default:
 if (index == 2147483647) tok |= 480;
-ht.put (t.value, JS.SV.getVariable (this.eval.getBitsetProperty (bs, tok, null, null, null, null, false, index, true)));
+ht.put (t.value, JS.SV.getVariable (this.eval.getBitsetProperty (bs, null, tok, null, null, null, null, false, index, true)));
 }
 }
 return this.addXMap (ht);
@@ -1229,14 +1235,14 @@ case 1111492631:
 return this.addXFloat ((x2.value).z);
 case 1145047050:
 var pt = JU.P3.newP (x2.value);
-this.vwr.toCartesian (pt, true);
+this.vwr.toCartesian (pt, false);
 return this.addXPt (pt);
 case 1111492612:
 case 1111492613:
 case 1111492614:
 case 1145047051:
 var ptf = JU.P3.newP (x2.value);
-this.vwr.toFractional (ptf, true);
+this.vwr.toFractional (ptf, false);
 return (op.intValue == 1145047051 ? this.addXPt (ptf) : this.addXFloat (op.intValue == 1111492612 ? ptf.x : op.intValue == 1111492613 ? ptf.y : ptf.z));
 case 1111492615:
 case 1111492616:
@@ -1275,7 +1281,7 @@ var isAtoms = (op.intValue != 1677721602);
 if (!isAtoms && Clazz.instanceOf (x2.value, JM.BondSet)) return this.addX (x2);
 var bs = x2.value;
 if (isAtoms && bs.cardinality () == 1 && (op.intValue & 480) == 0) op.intValue |= 32;
-var val = this.eval.getBitsetProperty (bs, op.intValue, null, null, x2.value, op.value, false, x2.index, true);
+var val = this.eval.getBitsetProperty (bs, null, op.intValue, null, null, x2.value, op.value, false, x2.index, true);
 return (isAtoms ? this.addXObj (val) : this.addX (JS.SV.newV (10, JM.BondSet.newBS (val, this.vwr.ms.getAtomIndices (bs)))));
 }
 return false;

@@ -29,6 +29,8 @@ this.iHaveModelIndex = false;
 this.nLCAO = 0;
 this.lcaoDir = null;
 this.associateNormals = false;
+this.oldFileName = null;
+this.newFileName = null;
 this.ptXY = null;
 this.keyXy = null;
 Clazz.instantialize (this, arguments);
@@ -72,7 +74,7 @@ if ("cache" === propertyName) {
 if (this.currentMesh == null) return;
 var id = this.currentMesh.thisID;
 var imodel = this.currentMesh.modelIndex;
-this.vwr.cachePut ("cache://isosurface_" + id, this.getPropI ("jvxlDataXml", -1));
+this.vwr.cachePut ("cache://isosurface_" + id, (this.getPropI ("jvxlDataXml", -1)).getBytes ());
 this.deleteMeshI (this.currentMesh.index);
 this.setPropI ("init", null, null);
 this.setPropI ("thisID", id, null);
@@ -271,18 +273,16 @@ this.currentMesh = this.thisMesh = null;
 return;
 }if ("mapColor" === propertyName || "readFile" === propertyName) {
 if (value == null) {
-value = this.vwr.fm.getBufferedReaderOrErrorMessageFromName (this.sg.params.fileName, null, true, true);
-if (Clazz.instanceOf (value, String)) {
-JU.Logger.error ("Isosurface: could not open file " + this.sg.params.fileName + " -- " + value);
-return;
-}if (!(Clazz.instanceOf (value, java.io.BufferedReader))) try {
-value = JU.Rdr.getBufferedReader (value, "ISO-8859-1");
-} catch (e) {
-if (Clazz.exceptionOf (e, java.io.IOException)) {
+if (this.sg.params.filesData == null) {
+value = this.getFileReader (this.sg.params.fileName);
 } else {
-throw e;
-}
-}
+value = this.sg.params.filesData;
+var a = this.sg.params.filesData[0];
+var b =  new Array (a.length);
+for (var i = b.length; --i >= 0 && value != null; ) if ((b[i] = this.getFileReader (a[i])) == null) value = null;
+
+if (value != null) this.sg.params.filesData[0] = b;
+}if (value == null) return;
 }} else if ("atomIndex" === propertyName) {
 this.atomIndex = (value).intValue ();
 if (this.thisMesh != null) this.thisMesh.atomIndex = this.atomIndex;
@@ -346,7 +346,7 @@ this.withinDistance2 *= this.withinDistance2;
 this.withinPoints = o[3];
 if (this.withinPoints.size () == 0) this.withinPoints = this.vwr.ms.getAtomPointVector (o[2]);
 } else if (("nci" === propertyName || "orbital" === propertyName) && this.sg != null) {
-this.sg.params.testFlags = (this.vwr.getTestFlag (2) ? 2 : 0);
+this.sg.params.testFlags = (this.vwr.getBoolean (603979962) ? 2 : 0);
 }if (this.sg != null && this.sg.setProp (propertyName, value, bs)) {
 if (this.sg.isValid) {
 if ("molecularOrbital" === propertyName) {
@@ -394,6 +394,22 @@ if (m.atomIndex >= firstAtomDeleted) m.atomIndex -= nAtomsDeleted;
 return;
 }this.setPropertySuper (propertyName, value, bs);
 }, "~S,~O,JU.BS");
+Clazz.defineMethod (c$, "getFileReader", 
+ function (fileName) {
+var value = this.vwr.fm.getBufferedReaderOrErrorMessageFromName (fileName, null, true, true);
+if (Clazz.instanceOf (value, String)) {
+JU.Logger.error ("Isosurface: could not open file " + fileName + " -- " + value);
+return null;
+}if (!(Clazz.instanceOf (value, java.io.BufferedReader))) try {
+value = JU.Rdr.getBufferedReader (value, "ISO-8859-1");
+} catch (e) {
+if (Clazz.exceptionOf (e, java.io.IOException)) {
+} else {
+throw e;
+}
+}
+return value;
+}, "~S");
 Clazz.defineMethod (c$, "setIsoMeshColor", 
  function (m, color) {
 m.jvxlData.baseColor = color;
@@ -518,7 +534,10 @@ var ret = this.getPropMC (property, index);
 if (ret != null) return ret;
 if (property === "message") {
 var s = "";
-if (this.shapeID == 24) s += " with cutoff=" + this.jvxlData.cutoff;
+if (!this.jvxlData.isValid) return "invalid! (no atoms selected?)";
+if (!Float.isNaN (this.jvxlData.integration)) s += "integration " + this.jvxlData.integration;
+if (this.shapeID == 24 || this.shapeID == 27 || this.shapeID == 28) s += " with cutoff=" + this.jvxlData.cutoff;
+if (this.shapeID == 27 || this.shapeID == 28) return s;
 if (this.jvxlData.dataMin != 3.4028235E38) s += " min=" + this.jvxlData.dataMin + " max=" + this.jvxlData.dataMax;
 s += "; " + JV.JC.shapeClassBases[this.shapeID].toLowerCase () + " count: " + this.getPropMC ("count", index);
 return s + this.getPropI ("dataRangeStr", index) + this.jvxlData.msg;
@@ -536,6 +555,7 @@ if (property === "cutoff") return Float.$valueOf (this.jvxlData.cutoff);
 if (property === "minMaxInfo") return  Clazz.newFloatArray (-1, [this.jvxlData.dataMin, this.jvxlData.dataMax]);
 if (property === "plane") return this.jvxlData.jvxlPlane;
 if (property === "contours") return thisMesh.getContours ();
+if (property === "pmesh" || property === "pmeshbin") return thisMesh.getPmeshData (property === "pmeshbin");
 if (property === "jvxlDataXml" || property === "jvxlMeshXml") {
 var meshData = null;
 this.jvxlData.slabInfo = null;
@@ -548,9 +568,8 @@ this.jvxlData.slabInfo = thisMesh.slabOptions.toString ();
 }var sb =  new JU.SB ();
 this.getMeshCommand (sb, thisMesh.index);
 thisMesh.setJvxlColorMap (true);
-return J.jvxl.data.JvxlCoder.jvxlGetFileVwr (this.vwr, this.jvxlData, meshData, this.title, "", true, 1, sb.toString (), null);
+return J.jvxl.data.JvxlCoder.jvxlGetFile (this.jvxlData, meshData, this.title, "", true, 1, sb.toString (), null);
 }if (property === "jvxlFileInfo") {
-thisMesh.setJvxlColorMap (false);
 return J.jvxl.data.JvxlCoder.jvxlGetInfo (this.jvxlData);
 }if (property === "command") {
 var sb =  new JU.SB ();
@@ -560,7 +579,8 @@ for (var i = list.size (); --i >= 0; ) this.getMeshCommand (sb, i);
 return sb.toString ();
 }if (property === "atoms") {
 return thisMesh.surfaceAtoms;
-}return null;
+}if (property === "colorEncoder") return thisMesh.colorEncoder;
+return null;
 }, "~S,~N");
 Clazz.defineMethod (c$, "getDataRange", 
  function (mesh) {
@@ -939,7 +959,7 @@ this.thisMesh.surfaceAtoms = this.sg.params.bsSelected;
 this.thisMesh.insideOut = this.sg.params.isInsideOut ();
 this.thisMesh.isModelConnected = this.sg.params.isModelConnected;
 this.thisMesh.vertexSource = this.sg.params.vertexSource;
-this.thisMesh.spanningVectors = this.sg.getSpanningVectors ();
+this.thisMesh.oabc = this.sg.getOriginVaVbVc ();
 this.thisMesh.calculatedArea = null;
 this.thisMesh.calculatedVolume = null;
 if (!this.thisMesh.isMerged) {
@@ -950,7 +970,7 @@ this.thisMesh.fixLattice ();
 }return this.thisMesh.setColorsFromJvxlData (this.sg.params.colorRgb);
 }if (!this.sg.params.allowVolumeRender) this.thisMesh.jvxlData.allowVolumeRender = false;
 this.thisMesh.setColorsFromJvxlData (this.sg.params.colorRgb);
-if (this.thisMesh.jvxlData.slabInfo != null) this.vwr.runScript ("isosurface " + this.thisMesh.jvxlData.slabInfo);
+if (this.thisMesh.jvxlData.slabInfo != null) this.vwr.runScriptCautiously ("isosurface " + this.thisMesh.jvxlData.slabInfo);
 if (this.sg.params.psi_monteCarloCount > 0) this.thisMesh.diameter = -1;
 return false;
 });
@@ -1010,7 +1030,9 @@ return;
 this.thisMesh.dataType = this.sg.params.dataType;
 this.thisMesh.scale3d = this.sg.params.scale3d;
 if (script != null) {
-if (script.charAt (0) == ' ') {
+if (this.oldFileName != null) {
+script = script.$replace (this.oldFileName, this.newFileName);
+}if (script.charAt (0) == ' ') {
 script = this.myType + " ID " + JU.PT.esc (this.thisMesh.thisID) + script;
 pt = script.indexOf ("; isosurface map");
 }}if (pt > 0 && this.scriptAppendix.length > 0) this.thisMesh.scriptCommand = script.substring (0, pt) + this.scriptAppendix + script.substring (pt);
@@ -1022,6 +1044,11 @@ function (fileName) {
 fileName = " # /*file*/\"" + fileName + "\"";
 if (this.scriptAppendix.indexOf (fileName) < 0) this.scriptAppendix += fileName;
 }, "~S");
+Clazz.overrideMethod (c$, "setRequiredFile", 
+function (oldName, fileName) {
+this.oldFileName = oldName;
+this.newFileName = fileName;
+}, "~S,~S");
 Clazz.defineMethod (c$, "setJvxlInfo", 
  function () {
 if (this.sg.jvxlData !== this.jvxlData || this.sg.jvxlData !== this.thisMesh.jvxlData) this.jvxlData = this.thisMesh.jvxlData = this.sg.jvxlData;

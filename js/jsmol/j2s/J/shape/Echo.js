@@ -80,6 +80,10 @@ this.currentObject.setMovableYPercent (Clazz.floatToInt (pt.y));
 if (this.currentObject != null) {
 this.currentObject.setXYZ (value, true);
 }return;
+}if ("offset" === propertyName) {
+if (this.currentObject != null) {
+this.currentObject.pymolOffset = value;
+}return;
 }if ("target" === propertyName) {
 this.thisID = null;
 var target = (value).intern ().toLowerCase ();
@@ -127,28 +131,27 @@ return true;
 return false;
 }return this.getPropShape (property, data);
 }, "~S,~A");
-Clazz.overrideMethod (c$, "getShapeState", 
-function () {
-return this.vwr.getShapeState (this);
-});
 Clazz.overrideMethod (c$, "getShapeDetail", 
 function () {
-var lst =  new JU.Lst ();
-var key =  new java.util.Hashtable ();
+var lst =  new java.util.Hashtable ();
 for (var e, $e = this.objects.entrySet ().iterator (); $e.hasNext () && ((e = $e.next ()) || true);) {
 var info =  new java.util.Hashtable ();
 var t = e.getValue ();
 var name = e.getKey ();
-info.put ("name", name);
+info.put ("boxXY", t.boxXY);
+if (t.xyz != null) info.put ("xyz", t.xyz);
 var o = t.image;
-if (o != null) {
+if (o == null) {
+info.put ("text", t.text == null ? "" : t.text);
+} else {
 info.put ("imageFile", t.text);
 info.put ("imageWidth", Integer.$valueOf (this.vwr.apiPlatform.getImageWidth (o)));
 info.put ("imageHeight", Integer.$valueOf (this.vwr.apiPlatform.getImageHeight (o)));
-key.put (name, info);
-}}
-lst.addLast (key);
-return lst;
+}lst.put (name, info);
+}
+var lst2 =  new JU.Lst ();
+lst2.addLast (lst);
+return lst2;
 });
 Clazz.defineStatics (c$,
 "FONTFACE", "Serif",

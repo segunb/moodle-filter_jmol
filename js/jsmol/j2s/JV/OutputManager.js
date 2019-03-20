@@ -73,9 +73,11 @@ var info =  new java.util.Hashtable ();
 info.put ("_IMAGE_", image);
 this.vwr.fm.loadImage (info, fileName, false);
 return errMsg = "OK - viewing " + fileName.substring (1);
-}if (out == null && (out = this.openOutputChannel (this.privateKey, fileName, false, false)) == null) return errMsg = "ERROR: canceled";
+}var isPngj = type.equals ("PNGJ");
+if (!isPngj) {
+if (out == null && (out = this.openOutputChannel (this.privateKey, fileName, false, false)) == null) return errMsg = "ERROR: canceled";
 fileName = out.getFileName ();
-var comment = null;
+}var comment = null;
 var stateData = null;
 params.put ("date", this.vwr.apiPlatform.getDateFormat ("8601"));
 if (type.startsWith ("JP")) {
@@ -90,11 +92,11 @@ comment = (!asBytes ? this.getWrappedState (null, null, image, null) : "");
 comment = "";
 } else if (type.startsWith ("PNG")) {
 comment = "";
-var isPngj = type.equals ("PNGJ");
 if (isPngj) {
 var outTemp = this.getOutputChannel (null, null);
 this.getWrappedState (fileName, scripts, image, outTemp);
 stateData = outTemp.toByteArray ();
+if (out == null && (out = this.openOutputChannel (this.privateKey, fileName, false, false)) == null) return errMsg = "ERROR: canceled";
 } else if (rgbbuf == null && !asBytes && !params.containsKey ("captureMode")) {
 stateData = (this.getWrappedState (null, scripts, image, null)).getBytes ();
 }if (stateData != null) {
@@ -147,9 +149,9 @@ if (isZipData) {
 errRet[0] = this.writeZipFile (out, v, "OK JMOL", null);
 return true;
 }objImage = null;
-v.remove (0);
-v.remove (0);
-params.put ("pngImgData", v.remove (0));
+v.removeItemAt (0);
+v.removeItemAt (0);
+params.put ("pngImgData", v.removeItemAt (0));
 var oz = this.getOutputChannel (null, null);
 errRet[0] = this.writeZipFile (oz, v, "OK JMOL", null);
 params.put ("type", "PNGJ");
@@ -157,7 +159,7 @@ type = "Png";
 params.put ("pngAppPrefix", "Jmol Type");
 params.put ("pngAppData", oz.toByteArray ());
 } else if (v.size () == 1) {
-var b = v.remove (0);
+var b = v.removeItemAt (0);
 out.write (b, 0, b.length);
 return true;
 } else {
@@ -169,7 +171,7 @@ errRet[0] = "Image encoder type " + type + " not available";
 return false;
 }var doClose = true;
 try {
-if (type.equals ("Gif") && this.vwr.getTestFlag (2)) params.put ("reducedColors", Boolean.TRUE);
+if (type.equals ("Gif") && this.vwr.getBoolean (603979962)) params.put ("reducedColors", Boolean.TRUE);
 var w = objImage == null ? -1 : JU.AU.isAI (objImage) ? (params.get ("width")).intValue () : this.vwr.apiPlatform.getImageWidth (objImage);
 var h = objImage == null ? -1 : JU.AU.isAI (objImage) ? (params.get ("height")).intValue () : this.vwr.apiPlatform.getImageHeight (objImage);
 params.put ("imageWidth", Integer.$valueOf (w));
@@ -210,11 +212,12 @@ return this.handleOutputToFile (params, true);
 Clazz.defineMethod (c$, "getOutputChannel", 
 function (fileName, fullPath) {
 if (!this.vwr.haveAccess (JV.Viewer.ACCESS.ALL)) return null;
-if (fileName != null) {
+var isCache = (fileName != null && fileName.startsWith ("cache://"));
+if (fileName != null && !isCache) {
 fileName = this.getOutputFileNameFromDialog (fileName, -2147483648, null);
 if (fileName == null) return null;
 }if (fullPath != null) fullPath[0] = fileName;
-var localName = (JU.OC.isLocal (fileName) ? fileName : null);
+var localName = (JU.OC.isLocal (fileName) || isCache ? fileName : null);
 try {
 return this.openOutputChannel (this.privateKey, localName, false, false);
 } catch (e) {
@@ -383,40 +386,44 @@ return fileName;
 }, "~S,~N,java.util.Map");
 Clazz.defineMethod (c$, "handleOutputToFile", 
 function (params, doCheck) {
-var sret = null;
 var fileName = params.get ("fileName");
-if (fileName == null) return null;
+var out = params.get ("outputChannel");
+if (fileName == null && out == null) return null;
+var sret = null;
 var type = params.get ("type");
 var text = params.get ("text");
 var width = JV.OutputManager.getInt (params, "width", 0);
 var height = JV.OutputManager.getInt (params, "height", 0);
+var saveWidth = 0;
+var saveHeight = 0;
 var quality = JV.OutputManager.getInt (params, "quality", -2147483648);
 var captureMode = params.get ("captureMode");
+var localName = null;
 if (captureMode != null && !this.vwr.allowCapture ()) return "ERROR: Cannot capture on this platform.";
 var mustRender = (quality != -2147483648);
-var localName = null;
 if (captureMode != null) {
 doCheck = false;
 mustRender = false;
-}if (!fileName.startsWith ("\1")) {
+}if (out == null) {
+if (!fileName.startsWith ("\1")) {
 if (doCheck) fileName = this.getOutputFileNameFromDialog (fileName, quality, params);
 fileName = this.setFullPath (params, fileName);
 }if (fileName == null) return null;
 params.put ("fileName", fileName);
 if (JU.OC.isLocal (fileName)) localName = fileName;
-var saveWidth = this.vwr.dimScreen.width;
-var saveHeight = this.vwr.dimScreen.height;
+saveWidth = this.vwr.dimScreen.width;
+saveHeight = this.vwr.dimScreen.height;
 this.vwr.creatingImage = true;
 if (mustRender) {
 this.vwr.mustRender = true;
 this.vwr.resizeImage (width, height, true, false, false);
 this.vwr.setModelVisibility ();
-}try {
+}}try {
 if (type.equals ("JMOL")) type = "ZIPALL";
 if (type.equals ("ZIP") || type.equals ("ZIPALL")) {
 var scripts = params.get ("scripts");
 if (scripts != null && type.equals ("ZIP")) type = "ZIPALL";
-sret = this.createZipSet (text, scripts, type.equals ("ZIPALL"), this.getOutputChannel (fileName, null), null);
+sret = this.createZipSet (text, scripts, type.equals ("ZIPALL"), out == null ? this.getOutputChannel (fileName, null) : out, null);
 } else if (type.equals ("SCENE")) {
 sret = this.createSceneSet (fileName, text, width, height);
 } else {
@@ -426,7 +433,7 @@ if (sret == null) {
 var createImage = true;
 var captureMsg = null;
 if (captureMode != null) {
-var out = null;
+out = null;
 var cparams = this.vwr.captureParams;
 var imode = "ad on of en ca mo ".indexOf (captureMode.substring (0, 2));
 var rootExt;
@@ -490,7 +497,7 @@ params.put ("captureMode", captureMode);
 fileName = params.get ("captureFileName");
 captureMsg = type + "_STREAM_" + (captureMode.equals ("end") ? "CLOSE " : "CANCEL ") + fileName;
 this.vwr.captureParams = null;
-params.put ("captureMsg", J.i18n.GT._ ("Capture") + ": " + (captureMode.equals ("cancel") ? J.i18n.GT._ ("canceled") : J.i18n.GT.o (J.i18n.GT._ ("{0} saved"), fileName)));
+params.put ("captureMsg", J.i18n.GT.$ ("Capture") + ": " + (captureMode.equals ("cancel") ? J.i18n.GT.$ ("canceled") : J.i18n.GT.o (J.i18n.GT.$ ("{0} saved"), fileName)));
 if (params.containsKey ("captureRootExt")) createImage = false;
 break;
 }
@@ -509,7 +516,7 @@ er.printStackTrace ();
 JU.Logger.error (this.vwr.setErrorMessage (sret = "ERROR creating image??: " + er, null));
 } finally {
 this.vwr.creatingImage = false;
-if (quality != -2147483648) this.vwr.resizeImage (saveWidth, saveHeight, true, false, true);
+if (quality != -2147483648 && saveWidth > 0) this.vwr.resizeImage (saveWidth, saveHeight, true, false, true);
 }
 return sret;
 }, "java.util.Map,~B");
@@ -526,9 +533,9 @@ value = null;
 if (!value.startsWith ("JmolLog_")) value = "JmolLog_" + value;
 path = this.getLogPath (this.vwr.logFilePath + value);
 }if (path == null) value = null;
- else JU.Logger.info (J.i18n.GT.o (J.i18n.GT._ ("Setting log file to {0}"), path));
+ else JU.Logger.info (J.i18n.GT.o (J.i18n.GT.$ ("Setting log file to {0}"), path));
 if (value == null || !this.vwr.haveAccess (JV.Viewer.ACCESS.ALL)) {
-JU.Logger.info (J.i18n.GT._ ("Cannot set log file path."));
+JU.Logger.info (J.i18n.GT.$ ("Cannot set log file path."));
 value = null;
 } else {
 this.vwr.logFileName = path;
@@ -579,12 +586,13 @@ for (var i = 0; i < scripts.length; i++) fileNames.addLast (scripts[i]);
 var newFileNames =  new JU.Lst ();
 for (var iFile = 0; iFile < nFiles; iFile++) {
 var name = fileNames.get (iFile);
-var isLocal = !this.vwr.isJS && JU.OC.isLocal (name);
+var isLocal = !JV.Viewer.isJS && JU.OC.isLocal (name);
 var newName = name;
 if (isLocal || includeRemoteFiles) {
 var ptSlash = name.lastIndexOf ("/");
 newName = (name.indexOf ("?") > 0 && name.indexOf ("|") < 0 ? JU.PT.replaceAllCharacters (name, "/:?\"'=&", "_") : JV.FileManager.stripPath (name));
 newName = JU.PT.replaceAllCharacters (newName, "[]", "_");
+newName = JU.PT.rep (newName, "#_DOCACHE_", "");
 var isSparDir = (fm.spardirCache != null && fm.spardirCache.containsKey (name));
 if (isLocal && name.indexOf ("|") < 0 && !isSparDir) {
 v.addLast (name);
@@ -592,7 +600,7 @@ v.addLast (newName);
 v.addLast (null);
 } else {
 var ret = (isSparDir ? fm.spardirCache.get (name) : fm.getFileAsBytes (name, null));
-if (!JU.AU.isAB (ret)) return ret;
+if (!JU.AU.isAB (ret)) return "ERROR: " + ret;
 newName = this.addPngFileBytes (name, ret, iFile, crcMap, isSparDir, newName, ptSlash, v);
 }name = "$SCRIPT_PATH$" + newName;
 }crcMap.put (newName, newName);

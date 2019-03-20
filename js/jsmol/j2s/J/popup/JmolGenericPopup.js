@@ -1,5 +1,5 @@
 Clazz.declarePackage ("J.popup");
-Clazz.load (["J.popup.GenericSwingPopup", "java.util.Properties", "JU.Lst"], "J.popup.JmolGenericPopup", ["java.lang.Boolean", "java.util.Arrays", "$.Hashtable", "JU.PT", "J.i18n.GT", "JM.Group", "J.popup.MainPopupResourceBundle", "JU.Elements"], function () {
+Clazz.load (["J.popup.GenericSwingPopup", "java.util.Properties", "JU.Lst"], "J.popup.JmolGenericPopup", ["java.lang.Boolean", "java.util.Arrays", "$.Hashtable", "JU.PT", "J.i18n.GT", "JM.Group", "J.popup.MainPopupResourceBundle", "JU.Elements", "JV.Viewer"], function () {
 c$ = Clazz.decorateAsClass (function () {
 this.vwr = null;
 this.updateMode = 0;
@@ -66,12 +66,12 @@ this.Special =  new JU.Lst ();
 this.SymmetryOnly =  new JU.Lst ();
 this.ChargesOnly =  new JU.Lst ();
 this.TemperatureOnly =  new JU.Lst ();
-this.noZapped =  Clazz.newArray (-1, ["surfaceMenu", "measureMenu", "pickingMenu", "computationMenu", "saveMenu", "exportMenu", "SIGNEDJAVAcaptureMenuSPECIAL"]);
+this.noZapped =  Clazz.newArray (-1, ["surfaceMenu", "measureMenu", "pickingMenu", "computationMenu", "SIGNEDJAVAcaptureMenuSPECIAL"]);
 });
 Clazz.defineMethod (c$, "initialize", 
 function (vwr, bundle, title) {
 this.vwr = vwr;
-this.initSwing (title, bundle, vwr.html5Applet, vwr.isJS, vwr.getBooleanProperty ("_signedApplet"), vwr.isWebGL);
+this.initSwing (title, bundle, vwr.html5Applet, JV.Viewer.isJS, vwr.getBooleanProperty ("_signedApplet"), JV.Viewer.isWebGL);
 }, "JV.Viewer,J.popup.PopupResource,~S");
 Clazz.overrideMethod (c$, "jpiDispose", 
 function () {
@@ -144,7 +144,7 @@ this.VibrationOnly.addLast (newMenu);
 } else if (item.indexOf ("SYMMETRY") >= 0) {
 this.SymmetryOnly.addLast (newMenu);
 }if (item.indexOf ("SPECIAL") >= 0) this.Special.addLast (newMenu);
-}, "~S,javajs.api.SC");
+}, "~S,javajs.awt.SC");
 Clazz.overrideMethod (c$, "appFixLabel", 
 function (label) {
 return label;
@@ -189,11 +189,11 @@ if (!TF) return true;
 what = "set picking " + basename.substring (0, basename.length - 2);
 }this.appRunScript (what);
 return true;
-}, "javajs.api.SC,~S,~S,~B");
+}, "javajs.awt.SC,~S,~S,~B");
 Clazz.overrideMethod (c$, "appRestorePopupMenu", 
 function () {
 this.thisPopup = this.popupMenu;
-if (this.vwr.isJS || this.nFrankList < 2) return;
+if (JV.Viewer.isJS || this.nFrankList < 2) return;
 for (var i = this.nFrankList; --i > 0; ) {
 var f = this.frankList[i];
 this.helper.menuInsertSubMenu (f[0], f[1], (f[2]).intValue ());
@@ -210,7 +210,7 @@ if (what.indexOf ("#CONFIG") >= 0) {
 this.configurationSelected = what;
 this.updateConfigurationComputedMenu ();
 this.updateModelSetComputedMenu ();
-}}, "javajs.api.SC,~S,~B");
+}}, "javajs.awt.SC,~S,~B");
 Clazz.defineMethod (c$, "setFrankMenu", 
  function (id) {
 if (this.currentFrankId != null && this.currentFrankId === id && this.nFrankList > 0) return;
@@ -225,7 +225,7 @@ if (id != null) for (var i = id.indexOf (".", 2) + 1; ; ) {
 var iNew = id.indexOf (".", i);
 if (iNew < 0) break;
 var menu = this.htMenus.get (id.substring (i, iNew));
-this.frankList[this.nFrankList++] =  Clazz.newArray (-1, [menu.getParent (), menu, Integer.$valueOf (this.vwr.isJS ? 0 : this.menuGetListPosition (menu))]);
+this.frankList[this.nFrankList++] =  Clazz.newArray (-1, [menu.getParent (), menu, Integer.$valueOf (JV.Viewer.isJS ? 0 : this.menuGetListPosition (menu))]);
 this.menuAddSubMenu (this.frankPopup, menu);
 i = iNew + 1;
 }
@@ -269,7 +269,7 @@ function (item, subMenu, word) {
 if ("modelSetMenu".equals (item)) {
 this.nullModelSetName = word;
 this.menuEnable (subMenu, false);
-}}, "~S,javajs.api.SC,~S");
+}}, "~S,javajs.awt.SC,~S");
 Clazz.overrideMethod (c$, "appUpdateForShow", 
 function () {
 if (this.updateMode == -1) return;
@@ -296,7 +296,7 @@ if (ignore) {
 this.menuSetLabel (menu, "");
 this.menuEnable (menu, false);
 } else {
-this.menuSetLabel (menu, J.i18n.GT.o (J.i18n.GT._ (text), this.modelSetFileName));
+this.menuSetLabel (menu, J.i18n.GT.o (J.i18n.GT.$ (text), this.modelSetFileName));
 this.menuEnable (menu, true);
 }});
 Clazz.defineMethod (c$, "getMenuText", 
@@ -364,7 +364,7 @@ if (atoms != null) this.menuCreateItem (menu, title, "select visible & (@" + JU.
 }
 this.menuEnable (menu, true);
 return true;
-}, "javajs.api.SC,JU.Lst");
+}, "javajs.awt.SC,JU.Lst");
 Clazz.defineMethod (c$, "updateHeteroComputedMenu", 
  function (htHetero) {
 var menu = this.htMenus.get ("PDBheteroComputedMenu");
@@ -392,10 +392,10 @@ var mos = (moData == null ? null : (moData.get ("mos")));
 var nOrb = (mos == null ? 0 : mos.size ());
 var text = this.getMenuText ("surfMoComputedMenuText");
 if (nOrb == 0) {
-this.menuSetLabel (menu, J.i18n.GT.o (J.i18n.GT._ (text), ""));
+this.menuSetLabel (menu, J.i18n.GT.o (J.i18n.GT.$ (text), ""));
 this.menuEnable (menu, false);
 return;
-}this.menuSetLabel (menu, J.i18n.GT.i (J.i18n.GT._ (text), nOrb));
+}this.menuSetLabel (menu, J.i18n.GT.i (J.i18n.GT.$ (text), nOrb));
 this.menuEnable (menu, true);
 var subMenu = menu;
 var nmod = (nOrb % this.itemMax);
@@ -501,7 +501,7 @@ menu.removeAll ();
 for (var i = 0; i < keys.length; i++) this.menuCreateItem (menu, keys[i] + " (" + counts.get (keys[i]) + ")", "select modelIndex=" + this.modelIndex + " && within('dssr', '" + keys[i] + "');", null);
 
 return true;
-}, "javajs.api.SC,java.util.Map");
+}, "javajs.awt.SC,java.util.Map");
 Clazz.defineMethod (c$, "updateGroup3List", 
  function (menu, name) {
 var nItems = 0;
@@ -515,7 +515,7 @@ nItems++;
 }var item = this.menuCreateItem (menu, name, script, this.menuGetId (menu) + "." + name);
 if (n == 0) this.menuEnable (item, false);
 return nItems;
-}, "javajs.api.SC,~S");
+}, "javajs.awt.SC,~S");
 Clazz.defineMethod (c$, "augmentGroup3List", 
  function (menu, type, addSeparator) {
 var pt = 138;
@@ -531,7 +531,7 @@ this.menuCreateItem (menu, name, "SELECT [" + heteroCode + "]", this.menuGetId (
 pt++;
 }
 return nItems;
-}, "javajs.api.SC,~S,~B");
+}, "javajs.awt.SC,~S,~B");
 Clazz.defineMethod (c$, "updateSYMMETRYComputedMenus", 
  function () {
 this.updateSYMMETRYSelectComputedMenu ();
@@ -549,7 +549,7 @@ if (info == null) return;
 var infolist = info.get ("operations");
 if (infolist == null) return;
 var name = info.get ("spaceGroupName");
-this.menuSetLabel (menu, name == null ? J.i18n.GT._ ("Space Group") : name);
+this.menuSetLabel (menu, name == null ? J.i18n.GT.$ ("Space Group") : name);
 var subMenu = menu;
 var nmod = this.itemMax;
 var pt = (infolist.length > this.itemMax ? 0 : -2147483648);
@@ -560,7 +560,7 @@ subMenu = this.menuNewSubMenu ((i + 1) + "..." + Math.min (i + this.itemMax, inf
 this.menuAddSubMenu (menu, subMenu);
 this.htMenus.put (id, subMenu);
 pt = 1;
-}if (i == 0) this.menuEnable (this.menuCreateItem (subMenu, J.i18n.GT._ ("none"), "draw sym_* delete", null), true);
+}if (i == 0) this.menuEnable (this.menuCreateItem (subMenu, J.i18n.GT.$ ("none"), "draw sym_* delete", null), true);
 var sym = infolist[i][1];
 if (sym.indexOf ("x1") < 0) sym = infolist[i][0];
 var entryName = (i + 1) + " " + infolist[i][2] + " (" + sym + ")";
@@ -602,7 +602,7 @@ this.menuEnable (menu, (this.modelCount > 0));
 this.menuSetLabel (menu, (this.modelIndex < 0 ? this.gti ("allModelsText", this.modelCount) : this.gto ("modelMenuText", (this.modelIndex + 1) + "/" + this.modelCount)));
 this.menuRemoveAll (menu, 0);
 if (this.modelCount < 1) return;
-if (this.modelCount > 1) this.menuCreateCheckboxItem (menu, J.i18n.GT._ ("All"), "frame 0 ##", null, (this.modelIndex < 0), false);
+if (this.modelCount > 1) this.menuCreateCheckboxItem (menu, J.i18n.GT.$ ("All"), "frame 0 ##", null, (this.modelIndex < 0), false);
 var subMenu = menu;
 var nmod = this.itemMax;
 var pt = (this.modelCount > this.itemMax ? 0 : -2147483648);
@@ -637,7 +637,7 @@ var nAltLocs = this.altlocs.length;
 this.menuSetLabel (menu, this.gti ("configurationMenuText", nAltLocs));
 this.menuRemoveAll (menu, 0);
 var script = "hide none ##CONFIG";
-this.menuCreateCheckboxItem (menu, J.i18n.GT._ ("All"), script, null, (this.updateMode == 1 && this.configurationSelected.equals (script)), false);
+this.menuCreateCheckboxItem (menu, J.i18n.GT.$ ("All"), script, null, (this.updateMode == 1 && this.configurationSelected.equals (script)), false);
 for (var i = 0; i < nAltLocs; i++) {
 script = "configuration " + (i + 1) + "; hide thisModel and not selected ##CONFIG";
 var entryName = "" + (i + 1) + " -- \"" + this.altlocs.charAt (i) + "\"";
@@ -673,7 +673,7 @@ this.addMenuItem (menu, this.gti ("chainsText", this.vwr.ms.getChainCountInModel
 this.addMenuItem (menu, this.gti ("polymersText", this.vwr.ms.getBioPolymerCountInModel (this.modelIndex)));
 var submenu = this.htMenus.get ("BiomoleculesMenu");
 if (submenu == null) {
-submenu = this.menuNewSubMenu (J.i18n.GT._ (this.getMenuText ("biomoleculesMenuText")), this.menuGetId (menu) + ".biomolecules");
+submenu = this.menuNewSubMenu (J.i18n.GT.$ (this.getMenuText ("biomoleculesMenuText")), this.menuGetId (menu) + ".biomolecules");
 this.menuAddSubMenu (menu, submenu);
 }this.menuRemoveAll (submenu, 0);
 this.menuEnable (submenu, false);
@@ -693,11 +693,11 @@ this.menuCreateItem (menu, this.gto ("viewMenuText", this.modelSetFileName), "sh
 }});
 Clazz.defineMethod (c$, "gti", 
  function (s, n) {
-return J.i18n.GT.i (J.i18n.GT._ (this.getMenuText (s)), n);
+return J.i18n.GT.i (J.i18n.GT.$ (this.getMenuText (s)), n);
 }, "~S,~N");
 Clazz.defineMethod (c$, "gto", 
  function (s, o) {
-return J.i18n.GT.o (J.i18n.GT._ (this.getMenuText (s)), o);
+return J.i18n.GT.o (J.i18n.GT.$ (this.getMenuText (s)), o);
 }, "~S,~O");
 Clazz.defineMethod (c$, "updateAboutSubmenu", 
  function () {
@@ -718,8 +718,8 @@ if (languages[i].display) {
 var code = languages[i].code;
 var name = languages[i].language;
 var nativeName = languages[i].nativeLanguage;
-var menuLabel = code + " - " + J.i18n.GT._ (name);
-if ((nativeName != null) && (!nativeName.equals (J.i18n.GT._ (name)))) {
+var menuLabel = code + " - " + J.i18n.GT.$ (name);
+if ((nativeName != null) && (!nativeName.equals (J.i18n.GT.$ (name)))) {
 menuLabel += " - " + nativeName;
 }if (p++ > 0 && (p % 4 == 1)) this.menuAddSeparator (menu);
 this.menuCreateCheckboxItem (menu, menuLabel, "language = \"" + code + "\" ##" + name, id + "." + code, language.equals (code), false);
@@ -728,7 +728,7 @@ this.menuCreateCheckboxItem (menu, menuLabel, "language = \"" + code + "\" ##" +
 Clazz.defineMethod (c$, "updateSpecialMenuItem", 
  function (m) {
 m.setText (this.getSpecialLabel (m.getName (), m.getText ()));
-}, "javajs.api.SC");
+}, "javajs.awt.SC");
 Clazz.defineMethod (c$, "getSpecialLabel", 
 function (name, text) {
 var pt = text.indexOf (" (");
@@ -736,7 +736,7 @@ if (pt < 0) pt = text.length;
 var info = null;
 if (name.indexOf ("captureLooping") >= 0) info = (this.vwr.am.animationReplayMode == 1073742070 ? "ONCE" : "LOOP");
  else if (name.indexOf ("captureFps") >= 0) info = "" + this.vwr.getInt (553648132);
- else if (name.indexOf ("captureMenu") >= 0) info = (this.vwr.captureParams == null ? J.i18n.GT._ ("not capturing") : this.vwr.fm.getFilePath (this.vwr.captureParams.get ("captureFileName"), false, true) + " " + this.vwr.captureParams.get ("captureCount"));
+ else if (name.indexOf ("captureMenu") >= 0) info = (this.vwr.captureParams == null ? J.i18n.GT.$ ("not capturing") : this.vwr.fm.getFilePath (this.vwr.captureParams.get ("captureFileName"), false, true) + " " + this.vwr.captureParams.get ("captureCount"));
 return (info == null ? text : text.substring (0, pt) + " (" + info + ")");
 }, "~S,~S");
 Clazz.defineStatics (c$,
