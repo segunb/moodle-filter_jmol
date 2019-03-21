@@ -87,8 +87,4 @@ if (bsDeleted != null && bsDeleted.get (i) || (atom.shapeVisibilityFlags & this.
 atom.setClickable (this.vf);
 }
 });
-Clazz.overrideMethod (c$, "getShapeState", 
-function () {
-return this.vwr.getShapeState (this);
-});
 });

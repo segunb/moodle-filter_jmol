@@ -69,7 +69,6 @@ class filter_jmol extends moodle_text_filter {
         $newtext = preg_replace_callback($search, 'filter_jmol_replace_callback', $text);
         if (($newtext !== $text) && !isset($jmolenabled)) {
             $jmolenabled = true;
-            $PAGE->requires->js(new moodle_url('/filter/jmol/js/bigscreen.min.js'));
             $newtext = '
             <script src="'.$wwwroot.'/filter/jmol/js/jsmol/jquery/jquery.min.js"></script>
             <script src="'.$wwwroot.'/filter/jmol/js/jquery-ui/jquery-ui.min.js"></script>
@@ -226,12 +225,5 @@ src = "'.new moodle_url('/filter/jmol/iframe.php', array(
             }
         });
     });
-    // Fullscreen function, using bigscreen polyfill, called from child iframe.
-    function fullscreen(x){
-        var elem = document.getElementById(x);
-        if (BigScreen.enabled) {
-            BigScreen.toggle(elem);
-        }
-    };
     </script>';
 }

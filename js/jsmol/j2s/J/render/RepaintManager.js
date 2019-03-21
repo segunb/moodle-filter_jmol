@@ -1,5 +1,5 @@
 Clazz.declarePackage ("J.render");
-Clazz.load (["J.api.JmolRepaintManager", "JU.BS"], "J.render.RepaintManager", ["java.lang.NullPointerException", "J.api.Interface", "JU.Logger", "JV.JC"], function () {
+Clazz.load (["J.api.JmolRepaintManager", "JU.BS"], "J.render.RepaintManager", ["java.lang.NullPointerException", "J.api.Interface", "JU.Logger", "JV.JC", "$.Viewer"], function () {
 c$ = Clazz.decorateAsClass (function () {
 this.vwr = null;
 this.shapeManager = null;
@@ -107,7 +107,7 @@ if (logTime) JU.Logger.checkTimer (msg, false);
 g3d.renderAllStrings (null);
 } catch (e) {
 if (Clazz.exceptionOf (e, Exception)) {
-if (!this.vwr.isJS) e.printStackTrace ();
+if (!JV.Viewer.isJS) e.printStackTrace ();
 if (this.vwr.async && "Interface".equals (e.getMessage ())) throw  new NullPointerException ();
 JU.Logger.error ("rendering error? " + e);
 } else {
@@ -152,7 +152,7 @@ exporter3D.renderAllStrings (exporter3D);
 msg = exporter3D.finalizeOutput ();
 } catch (e) {
 if (Clazz.exceptionOf (e, Exception)) {
-if (!this.vwr.isJS) e.printStackTrace ();
+if (!JV.Viewer.isJS) e.printStackTrace ();
 JU.Logger.error ("rendering error? " + e);
 } else {
 throw e;

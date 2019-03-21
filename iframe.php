@@ -52,10 +52,10 @@ if (strpos($browser, 'firefox')) {
     $bversion = str_replace('.', '', $bversion);
 }
 $wwwroot = $CFG->wwwroot;
-$url = $_GET['u'];
+$url = required_param('u', PARAM_URL);
 $pathname = $url;
-$filestem = $_GET['n'];
-$filetype = $_GET['f'];
+$filestem = required_param('n', PARAM_TEXT);
+$filetype = required_param('f', PARAM_TEXT);
 $filetypeargs = explode('.', $filetype);
 $filetypeend = array_pop($filetypeargs);
 if (!$filetypeargs) {
@@ -68,12 +68,12 @@ if ($filetypeend == 'png' || $filetypeend == 'gz' || $filetypeend == 'pse') {
     $binary = true;
 }
 $filename = $filestem.'.'.$filetype;
-$lang = $_GET['l'];
-$initscript = $_GET['i'];
-$controls = $_GET['c'];
-$id = $_GET['id'];
-$technol = $_GET['_USE'];
-$defer = $_GET['DEFER'];
+$lang = required_param('l', PARAM_ALPHAEXT);
+$initscript = optional_param('i', '', PARAM_RAW);
+$controls = optional_param('c', '', PARAM_ALPHANUM);
+$id = required_param('id', PARAM_INT);
+$technol = optional_param('_USE', 'HTML5', PARAM_ALPHANUM);
+$defer = optional_param('DEFER', '', PARAM_RAW);
 $coverpath = $wwwroot.'/filter/jmol/pix/Jmol_icon_256_colour.png';
 if ($filetypeend == 'png') {
     $coverpath = $pathname;
@@ -321,17 +321,10 @@ if ($controls !== '0') {
         case 'HTML5':
             echo '<option title = "JSmol using HTML5" value = "HTML5" selected = "selected">JSmol</option>';
             echo '<option title = "GLmol using WebGL" value = "WEBGL">GLmol</option>';
-            echo '<option title = "Jmol using Java" value = "SIGNED">Jmol</option>';
         break;
         case 'WEBGL':
             echo '<option title = "JSmol using HTML5" value = "HTML5">JSmol</option>';
             echo '<option title = "GLmol using WebGL" value = "WEBGL"selected = "selected">GLmol</option>';
-            echo '<option title = "Jmol using Java" value = "SIGNED">Jmol</option>';
-        break;
-        case 'SIGNED':
-            echo '<option title = "JSmol using HTML5" value = "HTML5">JSmol</option>';
-            echo '<option title = "GLmol using WebGL" value = "WEBGL">GLmol</option>';
-            echo '<option title = "Jmol using Java" value = "SIGNED" selected = "selected">Jmol</option>';
         break;
     }
     echo '</select>';
@@ -340,8 +333,6 @@ if ($controls !== '0') {
     echo get_string('spin', 'filter_jmol', true);
     echo '<img class = "jmolPanelImg" title = "'.get_string('downloadpngj', 'filter_jmol', true).'" id = "pngj" ';
     echo 'src = "'.$wwwroot.'/filter/jmol/pix/download.png">';
-    echo '<img class = "jmolPanelImg" title = "'.get_string('togglefullscreen', 'filter_jmol', true).'" id = "fullscreen" ';
-    echo 'src = "'.$wwwroot.'/filter/jmol/pix/fullscreen.png">';
     echo '<a href="'.$wwwroot.'/filter/jmol/help.php" target = "_blank">';
     echo '<img title = "'.get_string('help', 'filter_jmol', true).'" ';
     echo 'class = "jmolPanelImg" id = "help" src = "'.$wwwroot.'/filter/jmol/pix/help.png"></a>';
@@ -360,8 +351,6 @@ echo 'makeLiveImage: "'.$wwwroot.'/filter/jmol/pix/play_256.png",';
 echo 'coverImage: "'.$coverpath.'",';
 echo 'deferUncover: true,';
 echo 'j2sPath: "'.$wwwroot.'/filter/jmol/js/jsmol/j2s",';
-echo 'jarPath: "'.$wwwroot.'/filter/jmol/js/jsmol/java",';
-echo 'jarFile: "JmolAppletSigned.jar",';
 echo 'disableInitialConsole: true,';
 echo 'disableJ2SLoadMonitor: true,';
 echo 'readyFunction: null,';
@@ -377,26 +366,7 @@ echo 'fixsize();';
 // Write J(S)mol to div.
 echo '$("#jmolstructure").html(Jmol.getAppletHtml("jmolApplet0", Info));';
 echo 'Jmol._alertNoBinary = true;';
-if ($technol === "SIGNED") {
-    if ($bname == 'opr' && $bplatform == 'linux') {
-        echo '$("#jmolstructure").html("<div style=\"background-color: yellow; height: 100%\">';
-        echo ''.get_string('nojavasupport', 'filter_jmol', true).'</div>");';
-    } else if ($bname == 'chrome' && $bversion > 34 && $bplatform == 'linux') {
-        echo '$("#jmolstructure").html("<div style=\"background-color: yellow; height: 100%\">';
-        echo ''.get_string('nojavasupport', 'filter_jmol', true).'</div>");';
-    } else if ($bname == 'chrome' && $bversion > 44 && $bplatform != '!linux') {
-        echo '$("#jmolstructure").html("<div style=\"background-color: yellow; height: 100%\">';
-        echo ''.get_string('nojavasupport', 'filter_jmol', true).'</div>");';
-    } else if ($bname == 'edge') {
-        echo '$("#jmolstructure").html("<div style=\"background-color: yellow; height: 100%\">';
-        echo ''.get_string('nojavasupport', 'filter_jmol', true).'</div>");';
-    } else {
-        echo 'if (!navigator.javaEnabled()){';
-        echo '$("#jmolstructure").html("<div style=\"background-color: yellow; height: 100%\">';
-        echo ''.get_string('nojava', 'filter_jmol', true).'</div>");';
-        echo '}';
-    }
-} else if ($technol === "HTML5") {
+if ($technol === "HTML5") {
     if ($bname == 'msie' && $bversion < 9) {
         echo '$("#jmolstructure").html("<div style=\"background-color: yellow; height: 100%\">';
         echo ''.get_string('nohtml5', 'filter_jmol', true).'</div>");';
@@ -462,7 +432,6 @@ echo 'x = "_USE="+x;';
 echo 'var str = $(location).attr("href");';
 echo 'var res = str.replace("_USE=HTML5", x);';
 echo 'res = res.replace("_USE=WEBGL", x);';
-echo 'res = res.replace("_USE=SIGNED", x);';
 echo 'res = res.replace("&DEFER=1", "&DEFER=0");';
 echo '$(location).attr("href", res);';
 echo '});';

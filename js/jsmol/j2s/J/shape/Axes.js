@@ -1,5 +1,5 @@
 Clazz.declarePackage ("J.shape");
-Clazz.load (["J.shape.FontLineShape", "JU.P3", "$.V3"], "J.shape.Axes", ["java.lang.Boolean", "JU.PT", "$.SB", "JU.Escape", "JV.JC"], function () {
+Clazz.load (["J.shape.FontLineShape", "JU.P3", "$.V3"], "J.shape.Axes", ["java.lang.Boolean", "JV.JC"], function () {
 c$ = Clazz.decorateAsClass (function () {
 this.axisXY = null;
 this.scale = 0;
@@ -78,7 +78,7 @@ this.axisPoints[0].scaleAdd2 (this.scale, vertices[4], this.originPoint);
 this.axisPoints[1].scaleAdd2 (this.scale, vertices[2], this.originPoint);
 this.axisPoints[2].scaleAdd2 (this.scale, vertices[1], this.originPoint);
 return;
-}}this.originPoint.setT (this.fixedOrigin != null ? this.fixedOrigin : axesMode == 603979810 ? this.vwr.getBoundBoxCenter () : this.pt0);
+}}this.originPoint.setT (this.fixedOrigin != null ? this.fixedOrigin : axesMode == 603979809 ? this.vwr.getBoundBoxCenter () : this.pt0);
 this.setScale (this.vwr.getFloat (570425346) / 2);
 });
 Clazz.defineMethod (c$, "reinitShape", 
@@ -117,21 +117,6 @@ axisPoint.z *= this.corner.z * scale;
 }axisPoint.add (this.originPoint);
 }
 }, "~N");
-Clazz.overrideMethod (c$, "getShapeState", 
-function () {
-var sb =  new JU.SB ();
-sb.append ("  axes scale ").appendF (this.vwr.getFloat (570425346)).append (";\n");
-if (this.fixedOrigin != null) sb.append ("  axes center ").append (JU.Escape.eP (this.fixedOrigin)).append (";\n");
-if (this.axisXY.z != 0) sb.append ("  axes position [").appendI (Clazz.floatToInt (this.axisXY.x)).append (" ").appendI (Clazz.floatToInt (this.axisXY.y)).append (" ").append (this.axisXY.z < 0 ? " %" : "").append ("];\n");
-if (this.labels != null) {
-sb.append ("  axes labels ");
-for (var i = 0; i < this.labels.length; i++) if (this.labels[i] != null) sb.append (JU.PT.esc (this.labels[i])).append (" ");
-
-sb.append (";\n");
-}if (this.axisType != null) {
-sb.append ("  axes type " + JU.PT.esc (this.axisType));
-}return this.getShapeStateFL () + sb;
-});
 Clazz.defineStatics (c$,
 "MIN_AXIS_LEN", 1.5);
 });

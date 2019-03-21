@@ -73,6 +73,7 @@ function () {
 this.allowPDBFilter = true;
 this.pdbHeader = (this.getHeader ?  new JU.SB () : null);
 this.applySymmetry = !this.checkFilterKey ("NOSYMMETRY");
+if (this.isDSSP1) this.asc.setInfo ("isDSSP1", Boolean.TRUE);
 this.getTlsGroups = this.checkFilterKey ("TLS");
 if (this.checkFilterKey ("ASSEMBLY")) this.filter = JU.PT.rep (this.filter, "ASSEMBLY", "BIOMOLECULE");
 this.isbiomol = this.checkFilterKey ("BIOMOLECULE");
@@ -139,7 +140,7 @@ return true;
 case 4:
 case 5:
 case 6:
-this.structure ();
+if (!this.ignoreStructure) this.structure ();
 return true;
 case 7:
 this.het ();
@@ -168,13 +169,10 @@ case 16:
 this.formul ();
 return true;
 case 17:
-if (this.line.startsWith ("REMARK 350")) {
-this.remark350 ();
-return false;
-}if (this.line.startsWith ("REMARK 290")) {
-this.remark290 ();
-return false;
-}if (this.line.contains ("This file does not adhere to the PDB standard")) {
+if (this.line.startsWith ("REMARK 285")) return this.remark285 ();
+if (this.line.startsWith ("REMARK 350")) return this.remark350 ();
+if (this.line.startsWith ("REMARK 290")) return this.remark290 ();
+if (this.line.contains ("This file does not adhere to the PDB standard")) {
 this.gromacsWideFormat = true;
 }if (this.getTlsGroups) {
 if (this.line.indexOf ("TLS DETAILS") > 0) return this.remarkTls ();
@@ -223,7 +221,10 @@ this.finalizeReaderPDB ();
 Clazz.defineMethod (c$, "finalizeReaderPDB", 
 function () {
 this.checkNotPDB ();
-this.checkUnitCellParams ();
+if (this.pdbID != null) {
+this.asc.setAtomSetName (this.pdbID);
+this.asc.setCurrentModelInfo ("pdbID", this.pdbID);
+}this.checkUnitCellParams ();
 if (!this.isCourseGrained) this.connectAll (this.maxSerial, this.isConnectStateBug);
 var symmetry;
 if (this.vBiomolecules != null && this.vBiomolecules.size () > 0 && this.asc.ac > 0) {
@@ -256,7 +257,7 @@ this.sgName = this.fileSgName;
 this.fractionalizeCoordinates (true);
 this.asc.setModelInfoForSet ("biosymmetry", null, this.asc.iSet);
 this.asc.checkSpecial = false;
-}if (this.latticeCells != null && this.latticeCells[0] != 0) this.addJmolScript ("unitcell;");
+}if (this.latticeCells != null && this.latticeCells[0] != 0) this.addJmolScript ("unitcell;axes on;axes unitcell;");
 this.finalizeReaderASCR ();
 if (this.vCompnds != null) {
 this.asc.setInfo ("compoundSource", this.vCompnds);
@@ -453,13 +454,18 @@ biomtchains.addLast (chainlist);
 if (Clazz.exceptionOf (e, Exception)) {
 this.thisBiomolecule = null;
 this.vBiomolecules = null;
-return;
+return false;
 } else {
 throw e;
 }
 }
 }
 if (nBiomt > 0) JU.Logger.info ("biomolecule " + id + ": number of transforms: " + nBiomt);
+return false;
+});
+Clazz.defineMethod (c$, "remark285", 
+ function () {
+return true;
 });
 Clazz.defineMethod (c$, "remark290", 
  function () {
@@ -471,6 +477,7 @@ if (tokens.length < 4) break;
 if (this.doApplySymmetry || this.isbiomol) this.setSymmetryOperator (tokens[3]);
 }
 }}
+return false;
 });
 Clazz.defineMethod (c$, "getSerial", 
  function (i, j) {
@@ -746,6 +753,9 @@ this.checkNotPDB ();
 this.haveMappedSerials = false;
 this.sbConect = null;
 this.asc.newAtomSet ();
+this.asc.setCurrentModelInfo ("pdbID", this.pdbID);
+if (this.asc.iSet == 0 || this.isTrajectory) this.asc.setAtomSetName (this.pdbID);
+ else this.asc.setCurrentModelInfo ("name", this.pdbID);
 this.checkUnitCellParams ();
 if (!this.isCourseGrained) this.setModelPDB (true);
 this.asc.setCurrentAtomSetNumber (modelNumber);
@@ -758,7 +768,6 @@ this.asc.checkSpecial = !isPDB;
 this.setModelPDB (isPDB);
 this.nUNK = this.nRes = 0;
 this.currentGroup3 = null;
-if (this.pdbID != null) this.asc.setAtomSetName (this.pdbID);
 });
 Clazz.defineMethod (c$, "cryst1", 
  function () {
@@ -834,6 +843,7 @@ return;
 if (htName != null) {
 hetName = htName + hetName;
 }this.htHetero.put (groupName, hetName);
+this.appendLoadNote (groupName + " = " + hetName);
 });
 Clazz.defineMethod (c$, "anisou", 
  function () {

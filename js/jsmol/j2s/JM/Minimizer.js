@@ -139,11 +139,11 @@ if (this.$minimizationOn) return false;
 var pFF0 = this.pFF;
 this.getForceField (ff);
 if (this.pFF == null) {
-JU.Logger.error (J.i18n.GT.o (J.i18n.GT._ ("Could not get class for force field {0}"), ff));
+JU.Logger.error (J.i18n.GT.o (J.i18n.GT.$ ("Could not get class for force field {0}"), ff));
 return false;
 }JU.Logger.info ("minimize: initializing " + this.pFF.name + " (steps = " + steps + " criterion = " + crit + ") ...");
 if (bsSelected.nextSetBit (0) < 0) {
-JU.Logger.error (J.i18n.GT._ ("No atoms selected -- nothing to do!"));
+JU.Logger.error (J.i18n.GT.$ ("No atoms selected -- nothing to do!"));
 return false;
 }this.atoms = this.vwr.ms.at;
 this.bsAtoms = JU.BSUtil.copy (bsSelected);
@@ -204,7 +204,7 @@ bsElements.set (atomicNo);
 this.minAtoms[pt] =  new JM.MinAtom (pt, atom,  Clazz.newDoubleArray (-1, [atom.x, atom.y, atom.z]), this.ac);
 this.minAtoms[pt].sType = atom.getAtomName ();
 }
-JU.Logger.info (J.i18n.GT.i (J.i18n.GT._ ("{0} atoms will be minimized."), this.ac));
+JU.Logger.info (J.i18n.GT.i (J.i18n.GT.$ ("{0} atoms will be minimized."), this.ac));
 JU.Logger.info ("minimize: getting bonds...");
 this.bonds = this.vwr.ms.bo;
 this.rawBondCount = this.vwr.ms.bondCount;
@@ -218,7 +218,7 @@ return this.setModel (bsElements);
 Clazz.defineMethod (c$, "setModel", 
  function (bsElements) {
 if (!this.pFF.setModel (bsElements, this.elemnoMax)) {
-JU.Logger.error (J.i18n.GT.o (J.i18n.GT._ ("could not setup force field {0}"), this.ff));
+JU.Logger.error (J.i18n.GT.o (J.i18n.GT.$ ("could not setup force field {0}"), this.ff));
 if (this.ff.equals ("MMFF")) {
 this.getForceField ("UFF");
 return this.setModel (bsElements);
@@ -422,6 +422,9 @@ Clazz.defineMethod (c$, "endMinimization",
 function () {
 this.updateAtomXYZ ();
 this.setMinimizationOn (false);
+if (this.pFF == null) {
+System.out.println ("pFF was null");
+} else {
 var failed = this.pFF.detectExplosion ();
 if (failed) this.restoreCoordinates ();
 this.vwr.setIntProperty ("_minimizationStep", this.pFF.getCurrentStep ());
@@ -429,7 +432,7 @@ this.reportEnergy ();
 this.vwr.setStringProperty ("_minimizationStatus", (failed ? "failed" : "done"));
 this.vwr.notifyMinimizationStatus ();
 this.vwr.refresh (3, "Minimizer:done" + (failed ? " EXPLODED" : "OK"));
-JU.Logger.info ("minimizer: endMinimization");
+}JU.Logger.info ("minimizer: endMinimization");
 });
 Clazz.defineMethod (c$, "saveCoordinates", 
  function () {
@@ -479,10 +482,10 @@ if (this.isSilent) JU.Logger.info (msg);
  else this.vwr.scriptEcho (msg);
 }, "~S,~B");
 Clazz.defineMethod (c$, "calculatePartialCharges", 
-function (bonds, bondCount, atoms, bsAtoms) {
+function (ms, bsAtoms, bsReport) {
 var ff =  new JM.FF.ForceFieldMMFF (this);
-ff.setArrays (atoms, bsAtoms, bonds, bondCount, true, true);
+ff.setArrays (ms.at, bsAtoms, ms.bo, ms.bondCount, true, true);
 this.vwr.setAtomProperty (bsAtoms, 1086326785, 0, 0, null, null, ff.getAtomTypeDescriptions ());
-this.vwr.setAtomProperty (bsAtoms, 1111492619, 0, 0, null, ff.getPartialCharges (), null);
-}, "~A,~N,~A,JU.BS");
+this.vwr.setAtomProperty (bsReport == null ? bsAtoms : bsReport, 1111492619, 0, 0, null, ff.getPartialCharges (), null);
+}, "JM.ModelSet,JU.BS,JU.BS");
 });
